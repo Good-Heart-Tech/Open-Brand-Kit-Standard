@@ -21,7 +21,7 @@ Usage:
   obks validate [dir] [--strict] [--parent <path-to-parent-kit>]
   obks export [dir] [--all] [--dtcg] [--css] [--tailwind] [--html] [--agent]
   obks digest [dir] [--max-bytes N]
-  obks publish [dir] [--dry-run] [--out <dir>]
+  obks publish [dir] [--dry-run] [--out <dir>] [--zip] [--kit-version <v>] [--date YYYY-MM-DD]
   obks preview [dir]            (screenshots to tokens/exports/png/, needs Chrome or Edge)
   obks check-copy <file...> [--kit dir] [--strict]   (flag avoided words from voice/terms.yaml)
   obks upgrade [dir]
@@ -102,11 +102,19 @@ export async function runCli(argv) {
 
   if (cmd === "publish") {
     const dryRun = args.includes("--dry-run");
-    const result = await publishKit(resolveKitPath(dirArg(args)), { dryRun, out: getFlag(args, "--out") });
+    const result = await publishKit(resolveKitPath(dirArg(args)), {
+      dryRun,
+      out: getFlag(args, "--out"),
+      zip: args.includes("--zip"),
+      version: getFlag(args, "--kit-version"),
+      date: getFlag(args, "--date"),
+    });
     if (result.ok) {
       console.log(`${dryRun ? "Would share" : "Shared"} ${result.files.length} file(s) (${result.visibility}):`);
       for (const f of result.files) console.log(`  ${f}`);
+      if (result.zipName) console.log(`${dryRun ? "Would build" : "Built"} ${result.zipName}`);
       if (!dryRun) console.log(`Bundle written to ${result.outDir}`);
+      if (result.zipPath) console.log(`Zip written to ${result.zipPath} (and ${path.basename(result.latestPath)})`);
     }
     printResult(dryRun ? "publish (dry run)" : "publish", result);
     if (!result.ok) process.exitCode = 1;

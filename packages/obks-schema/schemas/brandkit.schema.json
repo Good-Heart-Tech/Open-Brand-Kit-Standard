@@ -50,6 +50,11 @@
             "active",
             "deprecated"
           ]
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^[0-9A-Za-z][0-9A-Za-z.+-]*$",
+          "description": "Optional kit version, for example 1.2.0. Used in the file name of `obks publish --zip`."
         }
       }
     },

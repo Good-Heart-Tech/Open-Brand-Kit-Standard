@@ -26,6 +26,12 @@ inputs:
   check-exports:
     description: Regenerate exports and digest, then fail if they differ from what is committed
     default: "true"
+  bundle:
+    description: Also build a download-ready brand kit zip (needs publication.visibility partner or public) and upload it as a workflow artifact
+    default: "false"
+  bundle-version:
+    description: Version for the zip file name, for example 1.2.0 or a tag like v1.2.0 (defaults to brand.version in brandkit.yaml)
+    default: ""
 
 runs:
   using: composite
@@ -62,3 +68,22 @@ runs:
         if [ "$STRICT" = "true" ]; then args+=(--strict); fi
         if [ -n "$PARENT_PATH" ]; then args+=(--parent "$PARENT_PATH"); fi
         node "$OBKS" "${args[@]}"
+    - name: Build brand kit zip
+      if: inputs.bundle == 'true'
+      shell: bash
+      env:
+        OBKS: ${{ github.action_path }}/packages/obks-cli/bin/obks.js
+        KIT_PATH: ${{ inputs.path }}
+        BUNDLE_VERSION: ${{ inputs.bundle-version }}
+      run: |
+        args=(publish "$KIT_PATH" --zip)
+        if [ -n "$BUNDLE_VERSION" ]; then args+=(--kit-version "$BUNDLE_VERSION"); fi
+        node "$OBKS" "${args[@]}"
+    - name: Upload brand kit zip
+      if: inputs.bundle == 'true'
+      uses: actions/upload-artifact@v4
+      with:
+        name: brand-kit-zip
+        path: |
+          ${{ inputs.path }}/dist/*.zip
+          ${{ inputs.path }}/dist/SHA256SUMS.txt

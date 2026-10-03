@@ -44,7 +44,7 @@ Required top-level keys:
 
 - `schema`: MUST be `obks/v1`
 - `specVersion`: the spec version the kit follows (`0.2.0`)
-- `brand`: `id` (lowercase, hyphenated), `displayName`, `status` (`draft` | `active` | `deprecated`)
+- `brand`: `id` (lowercase, hyphenated), `displayName`, `status` (`draft` | `active` | `deprecated`), optional `version` (used in the file name of `obks publish --zip`)
 - `role`: `organization` | `product` | `campaign`
 - `profiles`: enabled layers (section 4)
 - `consumption`: `cssVariables`, `agentDigest`, optional `tailwindTheme`, optional `cssPrefix`

@@ -50,6 +50,10 @@ Start here: **[Start your brand kit](docs/start-your-brand-kit.md)**. Fill in
 the [intake worksheet](docs/intake-worksheet.md), or see
 [how to load a kit into Canva](docs/canva.md).
 
+**Prefer a download?** Every release has a starter kit zip you can use without
+a GitHub account: [latest release](https://github.com/Good-Heart-Tech/Open-Brand-Kit-Standard/releases/latest),
+and a [plain-language guide](docs/download-a-brand-kit.md) to downloading kits and understanding the file names.
+
 ## See it
 
 Every example below is fictional. Each one shows its palette, the brand in use
@@ -96,7 +100,7 @@ npx @goodheart/obks-cli init ./my-brand --brand-id my-brand --display-name "My B
 | `obks validate [dir] [--strict] [--parent <dir>]` | Schema, required files, token formats, contrast, stale exports, sharing guardrails, parent tokens, rule pack |
 | `obks export [dir] --all` | DTCG, CSS, Tailwind v3/v4, brand-at-a-glance page, agent UI brief |
 | `obks digest [dir]` | Regenerate `AGENTS.md` and `digest/AGENT_CONTEXT.md` |
-| `obks publish [dir] [--dry-run]` | Bundle only the files `publication` allows (refuses for private kits) |
+| `obks publish [dir] [--dry-run] [--zip]` | Bundle only the files `publication` allows (refuses for private kits). `--zip` also builds `<id>-brand-kit-v<version>-<date>.zip`, a `-latest` copy, and `SHA256SUMS.txt` |
 | `obks check-copy <file...> [--kit dir]` | Flag words a draft should avoid, using the kit's `voice/terms.yaml` |
 | `obks preview [dir]` | Screenshot the brand in use and the type specimen to PNG (needs Chrome or Edge) |
 | `obks upgrade [dir]` | Bring an older kit up to the current spec |

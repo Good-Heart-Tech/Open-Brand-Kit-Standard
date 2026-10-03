@@ -1,5 +1,8 @@
-# Publishes the three packages to npm when a GitHub release is published.
-# One-time setup:
+# When a GitHub release is published:
+#   - "assets": attaches the starter kit zip and SHA256SUMS.txt to the release, so people
+#     without a GitHub account can download them. No secrets needed.
+#   - "publish": publishes the three packages to npm.
+# One-time setup for npm:
 #   1. Create the free "goodheart" organization on npmjs.com (public packages are free).
 #   2. Add an npm automation token as the repository secret NPM_TOKEN.
 name: release
@@ -13,6 +16,25 @@ permissions:
   id-token: write
 
 jobs:
+  assets:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - name: Tag must match the version in package.json
+        run: test "$GITHUB_REF_NAME" = "v$(node -p "require('./package.json').version")"
+      - run: node scripts/build-release-zips.js
+      - name: Attach zips to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$GITHUB_REF_NAME" dist/release/* --clobber
+
   publish:
     runs-on: ubuntu-latest
     steps:

@@ -10,6 +10,7 @@ import { validateKit } from "../lib/validate.js";
 import { exportKit } from "../lib/export.js";
 import { buildDigest } from "../lib/digest.js";
 import { publishKit } from "../lib/publish.js";
+import { listZip } from "../lib/zip.js";
 import { upgradeKit } from "../lib/upgrade.js";
 import { checkTokenValue, contrastRatio, cssVarName, kebab, toDtcgValue } from "../lib/tokens.js";
 import { readManifest, writeManifest } from "../lib/fs-kit.js";
@@ -251,6 +252,50 @@ test("publish builds a bundle with only the listed files", async () => {
   const r2 = await publishKit(dir, { out: foreign });
   assert.equal(r2.ok, false);
   assert.ok(fs.existsSync(path.join(foreign, "keep.txt")));
+});
+
+test("publish --zip builds a dated, versioned zip with only shared files", async () => {
+  const dir = newKit();
+  editManifest(dir, (m) => {
+    m.publication = { visibility: "public", includedPaths: ["assets/logo/"] };
+    m.contacts = { security: "https://testorg.example.org/contact" };
+  });
+  exportKit(dir, ["all"]);
+  const r = await publishKit(dir, { zip: true, version: "1.2.0", date: "2026-10-03" });
+  assert.ok(r.ok, r.errors.join("\n"));
+  const base = "test-org-brand-kit-v1.2.0-2026-10-03";
+  assert.equal(r.zipName, `${base}.zip`);
+  const zipPath = path.join(dir, "dist", `${base}.zip`);
+  const names = listZip(zipPath).map((e) => e.name);
+  assert.ok(names.includes(`${base}/README.md`));
+  assert.ok(names.includes(`${base}/assets/logo/mark.svg`));
+  assert.ok(!names.some((n) => n.includes("identity/") || n.includes(".obks-bundle")));
+  assert.match(listZip(zipPath).find((e) => e.name.endsWith("README.md")).data.toString(), /Version: 1\.2\.0/);
+  assert.ok(fs.existsSync(path.join(dir, "dist", "test-org-brand-kit-latest.zip")));
+  const sums = fs.readFileSync(path.join(dir, "dist", "SHA256SUMS.txt"), "utf8");
+  assert.match(sums, /test-org-brand-kit-v1\.2\.0-2026-10-03\.zip/);
+  assert.match(sums, /test-org-brand-kit-latest\.zip/);
+});
+
+test("publish --zip uses brand.version, rejects bad input, and never zips private kits", async () => {
+  const dir = newKit();
+  const priv = await publishKit(dir, { zip: true });
+  assert.equal(priv.ok, false);
+  assert.ok(hasMsg(priv.errors, /private/));
+
+  editManifest(dir, (m) => {
+    m.brand.version = "2.0.0";
+    m.publication = { visibility: "partner", includedPaths: ["assets/logo/"] };
+  });
+  exportKit(dir, ["all"]);
+  const ok = await publishKit(dir, { zip: true, dryRun: true, date: "2026-01-02" });
+  assert.equal(ok.zipName, "test-org-brand-kit-v2.0.0-2026-01-02.zip");
+  assert.ok(!fs.existsSync(path.join(dir, "dist")), "dry run writes nothing");
+
+  const badDate = await publishKit(dir, { zip: true, date: "Oct 3" });
+  assert.equal(badDate.ok, false);
+  const badVersion = await publishKit(dir, { zip: true, version: "../x" });
+  assert.equal(badVersion.ok, false);
 });
 
 test("contacts are optional, and the security contact may be a URL or an email", async () => {

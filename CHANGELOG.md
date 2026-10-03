@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- **Downloads without GitHub.** Each GitHub release now gets `obks-starter-kits-v<version>.zip` and `SHA256SUMS.txt` attached automatically (new `assets` job in `release.yml`, built by `scripts/build-release-zips.js`). The job fails if the release tag does not match the version in `package.json`.
+- **`obks publish --zip`** builds `<brand-id>-brand-kit-v<version>-<YYYY-MM-DD>.zip`, a `<brand-id>-brand-kit-latest.zip` copy, and `SHA256SUMS.txt` in `dist/`. Options: `--kit-version`, `--date`. The zip holds only the files `publication` allows and a plain-language `README.md`. Private kits are still refused.
+- Optional `brand.version` in `brandkit.yaml`, used for the zip file name.
+- OBKS GitHub Action inputs `bundle` and `bundle-version` to save the zip as a workflow artifact.
+- `docs/download-a-brand-kit.md`, a plain-language download guide.
+
 ## 0.6.1 (2026-10)
 
 ### Fixed

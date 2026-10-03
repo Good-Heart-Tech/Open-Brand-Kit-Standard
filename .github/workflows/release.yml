@@ -1,13 +1,17 @@
-# When a GitHub release is published:
-#   - "assets": attaches the starter kit zip and SHA256SUMS.txt to the release, so people
-#     without a GitHub account can download them. No secrets needed.
-#   - "publish": publishes the three packages to npm.
+# To release: bump the version everywhere, then push a tag such as v0.6.2.
+#   - "assets" (runs on every v* tag): creates the GitHub release if it does not exist and
+#     attaches the starter kit zip and SHA256SUMS.txt, so people without a GitHub account can
+#     download them. No secrets needed.
+#   - "publish" (runs only when a release is published by a person in the GitHub UI):
+#     publishes the three packages to npm.
 # One-time setup for npm:
 #   1. Create the free "goodheart" organization on npmjs.com (public packages are free).
 #   2. Add an npm automation token as the repository secret NPM_TOKEN.
 name: release
 
 on:
+  push:
+    tags: ["v*"]
   release:
     types: [published]
 
@@ -17,6 +21,7 @@ permissions:
 
 jobs:
   assets:
+    if: github.event_name == 'push' || github.event_name == 'release'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -30,12 +35,17 @@ jobs:
       - name: Tag must match the version in package.json
         run: test "$GITHUB_REF_NAME" = "v$(node -p "require('./package.json').version")"
       - run: node scripts/build-release-zips.js
+      - name: Create the release if needed
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --verify-tag --generate-notes --title "$GITHUB_REF_NAME"
       - name: Attach zips to the release
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release upload "$GITHUB_REF_NAME" dist/release/* --clobber
 
   publish:
+    if: github.event_name == 'release'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

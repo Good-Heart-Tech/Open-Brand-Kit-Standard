@@ -18,7 +18,7 @@ obks validate --strict
 | `tokens/*.bkr.json` | `tokens/*.obks.json` |
 | `TODO(bkr)`, `<!-- bkr:palette -->` | `TODO(obks)`, `<!-- obks:palette -->` |
 | `@goodheart/bkr-cli`, `bkr-schema`, `bkr-rules-ght` | `@goodheart/obks-cli`, `obks-schema`, `obks-rules-ght` |
-| `Good-Heart-Tech/Brand-Kit-Standard@v...` action | `Good-Heart-Tech/Open-Brand-Kit-Standard@v0.6.1` |
+| `Good-Heart-Tech/Brand-Kit-Standard@v...` action | `Good-Heart-Tech/Open-Brand-Kit-Standard@v0.6.2` |
 
 `obks upgrade` renames the token files and updates the kit's own markdown, YAML,
 and JSON (markers, commands, links, the action reference). Generated files are
@@ -143,7 +143,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: Good-Heart-Tech/Open-Brand-Kit-Standard@v0.6.1
+      - uses: Good-Heart-Tech/Open-Brand-Kit-Standard@v0.6.2
 ```
 
 ## Product (child) kits
@@ -161,7 +161,7 @@ In CI, check out the parent too so inherited values are verified:
           repository: Good-Heart-Tech/Good-Heart-Tech-Branding-Marketing
           path: .parent-kit
           token: ${{ secrets.PARENT_KIT_TOKEN }}   # only needed for private parents
-      - uses: Good-Heart-Tech/Open-Brand-Kit-Standard@v0.6.1
+      - uses: Good-Heart-Tech/Open-Brand-Kit-Standard@v0.6.2
         with:
           parent-path: .parent-kit
 ```

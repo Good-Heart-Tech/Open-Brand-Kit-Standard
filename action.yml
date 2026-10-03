@@ -1,7 +1,7 @@
 # Reusable GitHub Action: validate a OBKS brand kit in any repository.
 #
 #   - uses: actions/checkout@v4
-#   - uses: Good-Heart-Tech/Open-Brand-Kit-Standard@v0.6.1
+#   - uses: Good-Heart-Tech/Open-Brand-Kit-Standard@v0.6.2
 #     with:
 #       path: .
 #

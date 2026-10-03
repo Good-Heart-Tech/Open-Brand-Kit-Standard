@@ -1,6 +1,6 @@
 {
   "name": "@goodheart/obks-schema",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "description": "JSON Schemas for the Open Brand Kit Standard (OBKS): manifests, token files, and word rules",
   "license": "MIT",
   "author": "Good Heart Tech",

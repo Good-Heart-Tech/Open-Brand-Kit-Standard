@@ -1,7 +1,9 @@
-# To release: bump the version everywhere, then push a tag such as v0.6.2.
-#   - "assets" (runs on every v* tag): creates the GitHub release if it does not exist and
-#     attaches the starter kit zip and SHA256SUMS.txt, so people without a GitHub account can
-#     download them. No secrets needed.
+# To release: bump the version everywhere (package.json and the three packages) and push to main.
+#   - "assets" (runs on every push to main): if no release exists yet for v<version>, it creates
+#     the tag and GitHub release and attaches the starter kit zip and SHA256SUMS.txt, so people
+#     without a GitHub account can download them. If the release exists, it does nothing.
+#     Pushing a v* tag by hand or publishing a release in the GitHub UI also works.
+#     No secrets needed.
 #   - "publish" (runs only when a release is published by a person in the GitHub UI):
 #     publishes the three packages to npm.
 # One-time setup for npm:
@@ -11,6 +13,7 @@ name: release
 
 on:
   push:
+    branches: [main]
     tags: ["v*"]
   release:
     types: [published]
@@ -21,7 +24,6 @@ permissions:
 
 jobs:
   assets:
-    if: github.event_name == 'push' || github.event_name == 'release'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -31,18 +33,34 @@ jobs:
         with:
           node-version: "22"
           cache: npm
-      - run: npm ci
-      - name: Tag must match the version in package.json
-        run: test "$GITHUB_REF_NAME" = "v$(node -p "require('./package.json').version")"
-      - run: node scripts/build-release-zips.js
+      - name: Work out the release tag
+        id: tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=$(node -p "require('./package.json').version")
+          if [ "$GITHUB_REF_TYPE" = "tag" ]; then
+            tag="$GITHUB_REF_NAME"
+            test "$tag" = "v$version" || { echo "::error::Tag $tag does not match package.json version $version"; exit 1; }
+          else
+            tag="v$version"
+            if gh release view "$tag" >/dev/null 2>&1; then echo "Release $tag already exists; nothing to do."; echo "skip=true" >> "$GITHUB_OUTPUT"; fi
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+      - if: steps.tag.outputs.skip != 'true'
+        run: npm ci
+      - if: steps.tag.outputs.skip != 'true'
+        run: node scripts/build-release-zips.js
       - name: Create the release if needed
+        if: steps.tag.outputs.skip != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --verify-tag --generate-notes --title "$GITHUB_REF_NAME"
+        run: gh release view "${{ steps.tag.outputs.tag }}" >/dev/null 2>&1 || gh release create "${{ steps.tag.outputs.tag }}" --target "$GITHUB_SHA" --generate-notes --title "${{ steps.tag.outputs.tag }}"
       - name: Attach zips to the release
+        if: steps.tag.outputs.skip != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "$GITHUB_REF_NAME" dist/release/* --clobber
+        run: gh release upload "${{ steps.tag.outputs.tag }}" dist/release/* --clobber
 
   publish:
     if: github.event_name == 'release'

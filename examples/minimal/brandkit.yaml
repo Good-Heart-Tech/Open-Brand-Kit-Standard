@@ -1,11 +1,11 @@
 # yaml-language-server: $schema=https://cdn.jsdelivr.net/gh/Good-Heart-Tech/Open-Brand-Kit-Standard@main/packages/obks-schema/schemas/brandkit.schema.json
 # The smallest useful OBKS kit: colors, logo, and brand protection. No rules pack.
 schema: obks/v1
-specVersion: 0.2.0
+specVersion: 1.0.0
 brand:
   id: minimal-brand
   displayName: Minimal Brand
-  status: active
+  maturity: basic
 role: organization
 profiles:
   core: true

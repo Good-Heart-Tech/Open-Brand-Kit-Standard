@@ -1,12 +1,21 @@
-# Open Brand Kit Standard (OBKS) specification 0.2
+# Open Brand Kit Standard (OBKS) specification 1.0
 
 **Contract id:** `obks/v1`
-**Spec version:** 0.2.0
-**Status:** draft (Good Heart Tech steward)
+**Spec version:** 1.0.0
+**Status:** stable (Good Heart Tech steward)
 **Schemas:** [`brandkit.schema.json`](https://cdn.jsdelivr.net/gh/Good-Heart-Tech/Open-Brand-Kit-Standard@main/packages/obks-schema/schemas/brandkit.schema.json),
 [`obks-token.schema.json`](https://cdn.jsdelivr.net/gh/Good-Heart-Tech/Open-Brand-Kit-Standard@main/packages/obks-schema/schemas/obks-token.schema.json)
 
 The key words MUST, SHOULD, and MAY are used as in RFC 2119.
+
+**Stability promise (1.x).** A kit that is valid under 1.0 stays valid under every
+1.x release. New fields are optional. Anything deprecated keeps working for all of
+1.x and is removed no earlier than 2.0. Kits written for 0.1 and 0.2 are still
+read; `obks upgrade` moves them to 1.0.
+
+**Design principle.** A kit only has to contain what its owner wants it to hold.
+Nothing is required except what the kit itself turns on, and an unfinished or
+partial kit is a valid kit.
 
 This standard was first called the "Brand Kit Repository (BKR)" with contract id
 `ght.brandkit/v1`, `*.bkr.json` token files, `TODO(bkr)` and `<!-- bkr:... -->`
@@ -43,13 +52,23 @@ when `visual/*.md` mentions a token name (in backticks) that does not exist.
 Required top-level keys:
 
 - `schema`: MUST be `obks/v1`
-- `specVersion`: the spec version the kit follows (`0.2.0`)
-- `brand`: `id` (lowercase, hyphenated), `displayName`, `status` (`draft` | `active` | `deprecated`), optional `version` (used in the file name of `obks publish --zip`)
+- `specVersion`: the spec version the kit follows (`1.0.0`)
+- `brand`: `id` (lowercase, hyphenated) and `displayName`
 - `role`: `organization` | `product` | `campaign`
-- `profiles`: enabled layers (section 4)
-- `consumption`: `cssVariables`, `agentDigest`, optional `tailwindTheme`, optional `cssPrefix`
 
 Optional:
+
+- `brand.maturity`: `basic` (default) | `standard` | `advanced`. How complete the
+  kit says it is (section 4.1). Replaces `brand.status`.
+- `brand.retired`: `true` when the brand is no longer in use.
+- `brand.version`: the kit's own version, used in the file name of `obks publish --zip`.
+  This is the kit's version, not the standard's.
+- `brand.status` (`draft` | `active` | `deprecated`): deprecated in 1.0. `active`
+  is read as `standard`. `obks upgrade` converts it.
+- `profiles`: the sections the kit turns on (section 4). Only turned-on sections have required files.
+- `sections`: pointers for sections covered by another tool (section 4.2).
+- `consumption`: `cssVariables`, `agentDigest`, `tailwindTheme`, `cssPrefix`. Defaults:
+  `tokens/exports/css/variables.css`, `digest/AGENT_CONTEXT.md`, `tokens/exports/tailwind/theme.cjs`.
 
 - `organization`: `{ type, industry, location, serviceArea, founded, website }`, all
   optional. `type` is `company` | `government` | `nonprofit` | `education` | `solo` |
@@ -70,13 +89,15 @@ Kits SHOULD start with this line so editors can autocomplete the manifest:
 # yaml-language-server: $schema=https://cdn.jsdelivr.net/gh/Good-Heart-Tech/Open-Brand-Kit-Standard@main/packages/obks-schema/schemas/brandkit.schema.json
 ```
 
-## 4. Profiles (layers)
+## 4. Profiles (sections)
 
-Profiles declare which files are **required** for validation.
+A profile is a section of the kit that the kit turns on. Turning one on means
+its files are **required** for validation. A kit with no `profiles` has no
+required files beyond `brandkit.yaml`.
 
 | Profile | Required files | Purpose |
 |---------|----------------|---------|
-| `core` | `brandkit.yaml`, `README.md`, `AGENTS.md` | Always on |
+| `core` | none (a README and the generated `AGENTS.md` are recommended) | The kit itself |
 | `identity` | `identity/about.md`, `identity/naming.md` | Positioning, naming |
 | `voice` | `voice/tone.md`, `voice/vocabulary.md` | Tone, vocabulary |
 | `visual` | `visual/palette.md`, `visual/logo.md`, `visual/accessibility.md`, at least one file in `assets/logo/` | Logo and color rules |
@@ -84,8 +105,39 @@ Profiles declare which files are **required** for validation.
 | `tokens` | `tokens/colors.obks.json` | Machine-readable values |
 | `security` | `security/brand-protection.md` | Impersonation and phishing defenses |
 
-New kits enable all of these. `security` is new in 0.2; validation warns when it
-is off. The 0.1 `partnerPublic` profile is deprecated (see section 11).
+`obks init` makes a small starter that turns on only `core` and `tokens`
+(`--full` turns on all of them). The 0.1 `partnerPublic` profile is deprecated
+(see section 11).
+
+### 4.1 Maturity
+
+`brand.maturity` says how complete the kit claims to be. It never makes a file
+required. It only changes how unfinished work is reported:
+
+| Maturity | Meaning | Unfinished `TODO(obks)` sections |
+|----------|---------|----------------------------------|
+| `basic` (default) | A start. A few colors and a logo is enough. | A note |
+| `standard` | The everyday files are filled in. | A suggestion |
+| `advanced` | Also product kits, sharing rules, and word rules. | A suggestion |
+
+Suggestions never fail a check unless the tool is run in strict mode.
+
+### 4.2 Covered elsewhere
+
+If a section is handled by another tool or service, the kit SHOULD say where
+instead of copying it:
+
+```yaml
+sections:
+  voice:
+    see: "https://example.org/our-style-guide"
+  visual:
+    see: "Canva brand kit, owner: Maria"
+```
+
+Valid names are `identity`, `voice`, `visual`, `copy`, `tokens`, and `security`.
+A section with `see` is treated as turned off for file checks, and the agent
+digest tells AI tools to follow the pointer and not guess.
 
 ### Optional files (organization context)
 
@@ -107,8 +159,8 @@ Brand word choices belong in `voice/terms.yaml`; legal and regulatory limits
 belong in `copy/claims.md`. They have different owners.
 
 Template sections that still need writing are marked with a line starting
-`> TODO(obks):`. Validation warns about them, and fails when `brand.status` is
-`active`.
+`> TODO(obks):`. Validation reports them as a note at `basic` maturity and as a
+suggestion at `standard` or `advanced`. They are never errors.
 
 ## 5. Hierarchy
 
@@ -375,7 +427,7 @@ entries. `@goodheart/obks-rules-ght` is the Good Heart Tech pack.
 ## 10. Versioning
 
 - The spec version is in this document's header.
-- A kit's `specVersion` MUST be in the CLI's supported range (currently `0.1.x` and `0.2.x`).
+- A kit's `specVersion` MUST be in the CLI's supported range (currently `0.1.x`, `0.2.x`, and `1.x`).
 - `0.1.x` kits still validate, with a warning to run `obks upgrade`.
 - Breaking manifest changes will use a new contract id, `obks/v2`.
 - The pre-rename contract id `ght.brandkit/v1` is accepted as an alias of `obks/v1`.

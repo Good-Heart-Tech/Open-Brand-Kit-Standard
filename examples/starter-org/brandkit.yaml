@@ -1,11 +1,11 @@
 # yaml-language-server: $schema=https://cdn.jsdelivr.net/gh/Good-Heart-Tech/Open-Brand-Kit-Standard@main/packages/obks-schema/schemas/brandkit.schema.json
 # Reference organization kit (fictional). Every OBKS feature is used here, including organization context and word rules.
 schema: obks/v1
-specVersion: 0.2.0
+specVersion: 1.0.0
 brand:
   id: acme-labs
   displayName: Acme Labs
-  status: active
+  maturity: advanced
 role: organization
 organization:
   type: company

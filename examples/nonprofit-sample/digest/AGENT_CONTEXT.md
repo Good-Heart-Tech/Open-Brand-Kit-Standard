@@ -6,7 +6,7 @@
 
 - **Id:** cedar-hollow-pantry
 - **Name:** Cedar Hollow Community Pantry
-- **Status:** active
+- **Maturity:** standard
 - **Role:** organization
 - **Organization type:** nonprofit
 - **Industry:** community food pantry

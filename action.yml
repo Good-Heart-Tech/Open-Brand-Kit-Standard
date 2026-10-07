@@ -1,7 +1,7 @@
 # Reusable GitHub Action: validate a OBKS brand kit in any repository.
 #
 #   - uses: actions/checkout@v4
-#   - uses: Good-Heart-Tech/Open-Brand-Kit-Standard@v0.6.2
+#   - uses: Good-Heart-Tech/Open-Brand-Kit-Standard@v1
 #     with:
 #       path: .
 #
@@ -18,8 +18,8 @@ inputs:
     description: Folder containing brandkit.yaml
     default: "."
   strict:
-    description: Treat warnings as failures ("true" or "false")
-    default: "true"
+    description: Treat suggestions as failures ("true" or "false"). Off by default so a partly finished kit still passes.
+    default: "false"
   parent-path:
     description: Local path to a checkout of the parent kit (product kits)
     default: ""

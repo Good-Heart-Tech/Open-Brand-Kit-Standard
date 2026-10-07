@@ -14,7 +14,7 @@ import { upgradeKit } from "./upgrade.js";
 const HELP = `obks: Open Brand Kit Standard CLI
 
 Usage:
-  obks init <dir> [--role organization|product] [--brand-id id] [--display-name name]
+  obks init <dir> [--full] [--role organization|product] [--brand-id id] [--display-name name]
                  [--security-contact url-or-email] [--parent-repo url] [--parent-ref ref]
                  [--parent-brand-id id] [--parent-path ../org-kit]
                  [--org-type company|government|nonprofit|education|solo|other] [--industry text]
@@ -27,18 +27,21 @@ Usage:
   obks upgrade [dir]
   obks import legacy-ght-colors <dir> <path-to-colors.json>
 
+obks init makes a small starter kit (colors, logo, one-page BRAND.md). Add --full for every optional file.
+Nothing is required beyond what your kit turns on. A basic kit may be unfinished.
+
 Typical loop after editing a kit:
   obks export --all && obks digest && obks validate
 `;
 
 function printResult(label, result) {
-  for (const line of result.errors || []) console.error(`error: ${line}`);
-  for (const line of result.warnings || []) console.warn(`warn: ${line}`);
+  for (const line of result.errors || []) console.error(`fix: ${line}`);
+  for (const line of result.warnings || []) console.warn(`suggestion: ${line}`);
   for (const line of result.notes || []) console.log(`note: ${line}`);
   if (result.ok) {
-    console.log(`${label}: OK${result.warnings?.length ? ` (${result.warnings.length} warning(s))` : ""}`);
+    console.log(`${label}: OK${result.warnings?.length ? ` (${result.warnings.length} suggestion(s))` : ""}`);
   } else {
-    console.error(`${label}: FAILED (${result.errors.length} error(s), ${result.warnings?.length || 0} warning(s))`);
+    console.error(`${label}: needs attention (${result.errors.length} to fix, ${result.warnings?.length || 0} suggestion(s))`);
   }
 }
 
@@ -67,9 +70,10 @@ export async function runCli(argv) {
       parentPath: getFlag(args, "--parent-path"),
       orgType: getFlag(args, "--org-type"),
       industry: getFlag(args, "--industry"),
+      size: args.includes("--full") || getFlag(args, "--role") === "product" ? "full" : "basic",
     });
     console.log(`Initialized OBKS kit at ${out}`);
-    console.log("Next: fill in the TODO(obks) sections, then run `obks export --all && obks digest && obks validate`.");
+    console.log("Next: open BRAND.md and tokens/colors.obks.json, fill in what you know, then run `obks export --all && obks digest && obks validate`.");
     return;
   }
 

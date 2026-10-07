@@ -15,6 +15,10 @@ const GHT_PARENT_REPO = "https://github.com/Good-Heart-Tech/Good-Heart-Tech-Bran
 
 export function initKit(targetDir, options = {}) {
   const role = options.role || "organization";
+  // "basic" is a small starter (colors, logo, one-page BRAND.md). "full" has every optional file.
+  const size = options.size || "full";
+  if (!["basic", "full"].includes(size)) throw new Error(`--size must be basic or full (got ${size})`);
+  if (size === "basic" && role === "product") throw new Error("A product kit needs --full (it inherits from a parent kit)");
   if (!["organization", "product"].includes(role)) {
     throw new Error(`--role must be organization or product (got ${role})`);
   }
@@ -36,7 +40,7 @@ export function initKit(targetDir, options = {}) {
   const reportImpersonation = options.securityContact
     ? `report it here: ${options.securityContact}`
     : "tell us through the contact page on our website";
-  copyTemplateTree(path.join(templatesDir(), role), targetDir, {
+  copyTemplateTree(path.join(templatesDir(), size === "basic" ? "basic" : role), targetDir, {
     today: new Date().toISOString().slice(0, 10),
     brandId,
     reportImpersonation,
@@ -46,10 +50,12 @@ export function initKit(targetDir, options = {}) {
     parentBrandId: parent.brandId,
   });
 
+  if (size === "basic") return initBasic(targetDir, { brandId, displayName, options });
+
   const manifest = {
     schema: CONTRACT,
     specVersion: CURRENT_SPEC_VERSION,
-    brand: { id: brandId, displayName, status: "draft" },
+    brand: { id: brandId, displayName, maturity: "basic" },
     role,
     profiles: {
       core: true,
@@ -110,5 +116,34 @@ export function initKit(targetDir, options = {}) {
   exportKit(targetDir, ["all"]);
   buildDigest(targetDir);
 
+  return targetDir;
+}
+
+// A small starter: colors, logo, and a one-page BRAND.md. Nothing else is required.
+function initBasic(targetDir, { brandId, displayName, options }) {
+  const manifest = {
+    schema: CONTRACT,
+    specVersion: CURRENT_SPEC_VERSION,
+    brand: { id: brandId, displayName, maturity: "basic" },
+    role: "organization",
+    profiles: { core: true, tokens: true },
+    publication: { visibility: "private", includedPaths: [] },
+    validation: {
+      minContrastRatio: 4.5,
+      contrastPairs: [
+        { foreground: "palette.text", background: "palette.background", use: "all text" },
+        { foreground: "palette.background", background: "palette.primary", use: "button labels" },
+      ],
+    },
+  };
+  if (options.securityContact) manifest.contacts = { security: options.securityContact };
+  if (options.orgType || options.industry) {
+    manifest.organization = {};
+    if (options.orgType) manifest.organization.type = options.orgType;
+    if (options.industry) manifest.organization.industry = options.industry;
+  }
+  writeManifest(targetDir, manifest);
+  exportKit(targetDir, ["all"]);
+  buildDigest(targetDir);
   return targetDir;
 }

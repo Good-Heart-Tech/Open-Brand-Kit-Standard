@@ -27,8 +27,8 @@ export function validate({ manifest, tokens }) {
 
   // contacts.security is optional. Only catch template placeholders left on a live kit.
   const security = manifest.contacts?.security;
-  if (security && /example\.(org|com|net)(\/|$)/i.test(security) && manifest.brand.status === "active") {
-    errors.push("GHT rule: contacts.security is still a placeholder (example.org) on an active kit");
+  if (security && /example\.(org|com|net)(\/|$)/i.test(security) && (manifest.brand.maturity ? manifest.brand.maturity !== "basic" : manifest.brand.status === "active")) {
+    errors.push("GHT rule: contacts.security is still a placeholder (example.org) on a finished (standard or advanced) kit");
   }
 
   if (manifest.validation?.minContrastRatio !== undefined && manifest.validation.minContrastRatio < 4.5) {

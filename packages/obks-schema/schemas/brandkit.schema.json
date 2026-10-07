@@ -9,9 +9,7 @@
     "schema",
     "specVersion",
     "brand",
-    "role",
-    "profiles",
-    "consumption"
+    "role"
   ],
   "properties": {
     "schema": {
@@ -23,16 +21,15 @@
     },
     "specVersion": {
       "type": "string",
-      "pattern": "^0\\.[0-9]+\\.[0-9]+$",
-      "description": "Spec version this kit follows, for example 0.2.0."
+      "pattern": "^(0\\.[12]|1\\.[0-9]+)\\.[0-9]+$",
+      "description": "Spec version this kit follows, for example 1.0.0."
     },
     "brand": {
       "type": "object",
       "additionalProperties": false,
       "required": [
         "id",
-        "displayName",
-        "status"
+        "displayName"
       ],
       "properties": {
         "id": {
@@ -49,12 +46,26 @@
             "draft",
             "active",
             "deprecated"
-          ]
+          ],
+          "deprecated": true,
+          "description": "Deprecated in 1.0. Use brand.maturity (and brand.retired). `obks upgrade` converts it."
         },
         "version": {
           "type": "string",
           "pattern": "^[0-9A-Za-z][0-9A-Za-z.+-]*$",
           "description": "Optional kit version, for example 1.2.0. Used in the file name of `obks publish --zip`."
+        },
+        "maturity": {
+          "enum": [
+            "basic",
+            "standard",
+            "advanced"
+          ],
+          "description": "How complete this kit says it is. basic (default): a start, nothing is required. standard: the everyday files are filled in. advanced: also product kits, sharing, and word rules. Unfinished TODO(obks) sections are only a note at basic."
+        },
+        "retired": {
+          "type": "boolean",
+          "description": "Set to true when the brand is no longer in use."
         }
       }
     },
@@ -148,12 +159,10 @@
     "profiles": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "core"
-      ],
+      "required": [],
       "properties": {
         "core": {
-          "const": true
+          "type": "boolean"
         },
         "identity": {
           "type": "boolean"
@@ -183,10 +192,7 @@
     "consumption": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "cssVariables",
-        "agentDigest"
-      ],
+      "required": [],
       "properties": {
         "cssVariables": {
           "type": "string",
@@ -357,6 +363,97 @@
             }
           ],
           "description": "Optional. Where people report impersonation. Prefer a URL (website contact page or /.well-known/security.txt) so no email address is stored in the kit."
+        }
+      }
+    },
+    "sections": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Optional pointers for sections that live somewhere else (another tool or service). A section with `see` is not checked for files.",
+      "properties": {
+        "identity": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "see"
+          ],
+          "properties": {
+            "see": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Where this is covered, as a link or a short sentence."
+            }
+          }
+        },
+        "voice": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "see"
+          ],
+          "properties": {
+            "see": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Where this is covered, as a link or a short sentence."
+            }
+          }
+        },
+        "visual": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "see"
+          ],
+          "properties": {
+            "see": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Where this is covered, as a link or a short sentence."
+            }
+          }
+        },
+        "copy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "see"
+          ],
+          "properties": {
+            "see": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Where this is covered, as a link or a short sentence."
+            }
+          }
+        },
+        "tokens": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "see"
+          ],
+          "properties": {
+            "see": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Where this is covered, as a link or a short sentence."
+            }
+          }
+        },
+        "security": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "see"
+          ],
+          "properties": {
+            "see": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Where this is covered, as a link or a short sentence."
+            }
+          }
         }
       }
     }

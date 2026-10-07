@@ -6,7 +6,7 @@
 
 - **Id:** acme-docs
 - **Name:** Acme Docs
-- **Status:** active
+- **Maturity:** standard
 - **Role:** product
 - **Parent kit:** https://github.com/Good-Heart-Tech/Open-Brand-Kit-Standard @ main
 - **Sharing:** Private: do not send files from this kit outside the organization.

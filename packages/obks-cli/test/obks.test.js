@@ -73,22 +73,97 @@ test("token value checks catch bad values", () => {
 
 // --- Kit lifecycle ------------------------------------------------------------------
 
-test("a fresh kit validates, but strict mode flags unfinished TODO sections", async () => {
+test("a fresh kit validates, and unfinished TODO sections are only a note at basic", async () => {
   const dir = newKit();
-  const loose = await validateKit(dir);
-  assert.deepEqual(loose.errors, []);
-  assert.ok(loose.ok);
-  assert.ok(hasMsg(loose.warnings, /TODO\(obks\)/));
-  const strict = await validateKit(dir, { strict: true });
-  assert.equal(strict.ok, false);
+  assert.equal(readManifest(dir).brand.maturity, "basic");
+  const r = await validateKit(dir, { strict: true });
+  assert.deepEqual(r.errors, []);
+  assert.ok(r.ok);
+  assert.ok(hasMsg(r.notes, /TODO\(obks\)/));
 });
 
-test("TODO sections are errors once a kit is marked active", async () => {
+test("TODO sections become a suggestion, never an error, once a kit says it is standard", async () => {
   const dir = newKit();
-  editManifest(dir, (m) => (m.brand.status = "active"));
+  editManifest(dir, (m) => (m.brand.maturity = "standard"));
   exportKit(dir, ["all"]);
   const r = await validateKit(dir);
-  assert.ok(hasMsg(r.errors, /TODO\(obks\)/));
+  assert.ok(r.ok);
+  assert.ok(hasMsg(r.warnings, /TODO\(obks\)/));
+  assert.equal((await validateKit(dir, { strict: true })).ok, false);
+});
+
+test("the old brand.status still works: active counts as standard", async () => {
+  const dir = newKit();
+  editManifest(dir, (m) => {
+    delete m.brand.maturity;
+    m.brand.status = "active";
+  });
+  exportKit(dir, ["all"]);
+  const r = await validateKit(dir);
+  assert.ok(r.ok);
+  assert.ok(hasMsg(r.warnings, /TODO\(obks\)/));
+  assert.ok(hasMsg(r.notes, /brand\.maturity/));
+});
+
+test("the basic starter is small and passes strict validation", async () => {
+  const dir = path.join(tmp(), "starter");
+  initKit(dir, { brandId: "tiny-org", displayName: "Tiny Org", size: "basic" });
+  assert.ok(fs.existsSync(path.join(dir, "BRAND.md")));
+  assert.ok(fs.existsSync(path.join(dir, "tokens/colors.obks.json")));
+  assert.ok(!fs.existsSync(path.join(dir, "identity")));
+  assert.ok(!fs.existsSync(path.join(dir, "voice")));
+  const m = readManifest(dir);
+  assert.equal(m.brand.maturity, "basic");
+  assert.equal(m.validation.rulesPack, undefined);
+  const r = await validateKit(dir, { strict: true });
+  assert.deepEqual(r.errors, []);
+  assert.ok(r.ok, r.warnings.join("\n"));
+  const digest = fs.readFileSync(path.join(dir, "digest/AGENT_CONTEXT.md"), "utf8");
+  assert.match(digest, /Brand summary/);
+  assert.match(digest, /Not decided/);
+});
+
+test("a kit without profiles or consumption is valid", async () => {
+  const dir = path.join(tmp(), "bare");
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(
+    path.join(dir, "brandkit.yaml"),
+    "schema: obks/v1\nspecVersion: 1.0.0\nbrand:\n  id: bare-org\n  displayName: Bare Org\nrole: organization\n"
+  );
+  const r = await validateKit(dir, { strict: true });
+  assert.deepEqual(r.errors, []);
+  assert.ok(r.ok);
+});
+
+test("a section covered elsewhere needs no files and shows up in the digest", async () => {
+  const dir = newKit();
+  fs.rmSync(path.join(dir, "voice"), { recursive: true });
+  let r = await validateKit(dir);
+  assert.ok(hasMsg(r.errors, /Section voice is turned on but voice\/tone\.md is missing/));
+  editManifest(dir, (m) => {
+    m.sections = { voice: { see: "https://example.org/style-guide" } };
+  });
+  r = await validateKit(dir);
+  assert.ok(!hasMsg(r.errors, /voice/), r.errors.join("\n"));
+  assert.ok(hasMsg(r.notes, /voice is covered elsewhere/));
+  buildDigest(dir);
+  assert.match(fs.readFileSync(path.join(dir, "digest/AGENT_CONTEXT.md"), "utf8"), /example\.org\/style-guide/);
+});
+
+test("upgrade turns brand.status into brand.maturity and moves the kit to spec 1.0", async () => {
+  const dir = newKit();
+  editManifest(dir, (m) => {
+    delete m.brand.maturity;
+    m.brand.status = "deprecated";
+    m.specVersion = "0.2.0";
+  });
+  const { changes } = upgradeKit(dir);
+  assert.ok(changes.some((c) => /brand\.status deprecated/.test(c)));
+  const m = readManifest(dir);
+  assert.equal(m.specVersion, "1.0.0");
+  assert.equal(m.brand.status, undefined);
+  assert.equal(m.brand.maturity, "standard");
+  assert.equal(m.brand.retired, true);
 });
 
 test("export output is deterministic", () => {
@@ -484,12 +559,12 @@ test("organization type is checked, and sharing facts or claims is flagged", asy
 
 // --- Upgrade --------------------------------------------------------------------------
 
-test("upgrade moves a 0.1 kit to 0.2 and keeps manifest comments", async () => {
+test("upgrade moves a 0.1 kit to 1.0 and keeps manifest comments", async () => {
   const dir = newKit();
   const yamlPath = path.join(dir, "brandkit.yaml");
   let text = fs.readFileSync(yamlPath, "utf8");
   text = text
-    .replace("specVersion: 0.2.0", "specVersion: 0.1.0")
+    .replace("specVersion: 1.0.0", "specVersion: 0.1.0")
     .replace("  security: true\n", "  partnerPublic: true\n")
     .replace(/publication:\n  visibility: private\n  includedPaths: \[\]\n/, "")
     .replace("schema: obks/v1", "# keep this comment\nschema: obks/v1");
@@ -503,7 +578,7 @@ test("upgrade moves a 0.1 kit to 0.2 and keeps manifest comments", async () => {
   const { changes } = upgradeKit(dir);
   assert.ok(changes.length > 0);
   const m = readManifest(dir);
-  assert.equal(m.specVersion, "0.2.0");
+  assert.equal(m.specVersion, "1.0.0");
   assert.equal(m.publication.visibility, "partner");
   assert.equal(m.profiles.partnerPublic, undefined);
   assert.equal(m.profiles.security, true);

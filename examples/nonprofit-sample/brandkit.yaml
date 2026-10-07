@@ -1,11 +1,11 @@
 # yaml-language-server: $schema=https://cdn.jsdelivr.net/gh/Good-Heart-Tech/Open-Brand-Kit-Standard@main/packages/obks-schema/schemas/brandkit.schema.json
 # Realistic nonprofit example (fictional organization) with a public press kit.
 schema: obks/v1
-specVersion: 0.2.0
+specVersion: 1.0.0
 brand:
   id: cedar-hollow-pantry
   displayName: Cedar Hollow Community Pantry
-  status: active
+  maturity: standard
 role: organization
 organization:
   type: nonprofit

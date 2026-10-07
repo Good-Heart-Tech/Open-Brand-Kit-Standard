@@ -16,6 +16,29 @@ handle the computer parts; your job is to decide what the brand is.
 - **Automatic checks** that your text colors are easy to read
 - A **checklist** that helps stop scammers from pretending to be you
 
+## The fastest way: ask an AI assistant
+
+Open Claude, ChatGPT, or Cursor and paste:
+
+> Read https://raw.githubusercontent.com/Good-Heart-Tech/Open-Brand-Kit-Standard/main/INSTRUCTIONS-FOR-AI.md and help me build my brand kit.
+
+It interviews you one question at a time and creates the files. You can say
+"skip" to anything you do not know. Nothing needs to be installed.
+
+## You do not have to finish
+
+A kit is useful the day it has three colors and a logo. You choose how far to go:
+
+| Level (`maturity`) | What it means |
+|--------------------|---------------|
+| `basic` | A start. Nothing is required. Unfinished sections are only a friendly note. |
+| `standard` | The everyday files are filled in: who you are, how you sound, facts, wording. |
+| `advanced` | Also product kits, sharing rules, and word rules. |
+
+If another tool already covers part of your brand (a style guide on your
+website, a Canva brand kit), do not copy it. Point to it in `brandkit.yaml`
+under `sections` and the kit will tell people and AI tools to look there.
+
 ## How long it takes
 
 | Kit size | Time | What it covers |
@@ -43,9 +66,10 @@ there are no wrong answers. Your technical helper turns your answers into the ki
 
 ### 3. Your technical helper sets up the kit
 
-They run `obks init`, fill in each `TODO(obks)` section from your worksheet,
-take the screenshots with `obks preview`, and check that everything passes.
-Then they send you the link to the kit's README.
+They run `obks init` (or use an AI assistant), fill in what you know from your
+worksheet, take the screenshots with `obks preview`, and check the kit. Anything
+you do not know yet can stay as "Not decided" and be filled in later. Then they
+send you the link to the kit's README.
 
 ### 4. Review the brand
 

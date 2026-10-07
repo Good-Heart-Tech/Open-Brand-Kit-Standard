@@ -1,16 +1,48 @@
 # Open Brand Kit Standard (OBKS)
 
-**OBKS** is an open standard and free CLI for brand kits that people, websites,
-and AI assistants can all read, so nobody has to guess your colors, invent a
-second logo, or write in the wrong voice.
+**OBKS** is a free, open standard for brand kits that people, websites, and AI
+assistants can all read, so nobody has to guess your colors, invent a second
+logo, or write in the wrong voice. A small optional command line tool checks
+kits and creates web files for you, but you never need it to start.
 
 It works for any organization: companies and startups, government agencies,
 nonprofits, schools, and one-person businesses. A kit can be a whole
 organization, or a product, department, or sub-brand that inherits from one.
 
 Steward: [Good Heart Tech](https://github.com/Good-Heart-Tech).
-Spec: [`spec/OBKS-SPEC.md`](spec/OBKS-SPEC.md) (contract `obks/v1`).
-Formerly "Brand Kit Repository (BKR)"; old kits still work, and `obks upgrade` converts them.
+Spec: [`spec/OBKS-SPEC.md`](spec/OBKS-SPEC.md) (version 1.0, contract `obks/v1`).
+
+## Get started in five minutes
+
+**With an AI assistant (easiest).** Open Claude, ChatGPT, or Cursor and paste this:
+
+> Read https://raw.githubusercontent.com/Good-Heart-Tech/Open-Brand-Kit-Standard/main/INSTRUCTIONS-FOR-AI.md and help me build my brand kit.
+
+It asks a few questions, one at a time, and creates the files. Nothing to install.
+Say "skip" to anything you do not know yet.
+
+**By downloading.** Grab a starter kit zip from the
+[latest release](https://github.com/Good-Heart-Tech/Open-Brand-Kit-Standard/releases/latest).
+No GitHub account needed. Unzip it and open `README.txt`.
+
+**From the command line (optional).** `npx @goodheart/obks-cli init ./my-brand`
+
+## You can use just part of it
+
+You do not have to fill in everything. A kit only needs what you want it to hold.
+
+- **Start small.** Three colors and a logo is a real, valid kit (`maturity: basic`).
+  Unfinished sections are a friendly note, never an error.
+- **Say how complete it is.** `maturity` is `basic` (a start), `standard` (the
+  everyday files are filled in), or `advanced` (also product kits, sharing, and word rules).
+- **Skip what another tool already covers.** If your voice lives in a website style
+  guide or your logo lives in Canva, point to it instead of copying it:
+
+  ```yaml
+  sections:
+    voice:
+      see: "https://example.org/our-style-guide"
+  ```
 
 ## Goals
 
@@ -83,7 +115,7 @@ From a clone of this repo (Node 20+):
 ```bash
 npm install
 npm test
-npm run obks -- init ../my-brand --brand-id my-brand --display-name "My Brand"
+npm run obks -- init ../my-brand --brand-id my-brand --display-name "My Brand"   # add --full for every optional file
 ```
 
 Once the packages are on npm:
@@ -96,8 +128,8 @@ npx @goodheart/obks-cli init ./my-brand --brand-id my-brand --display-name "My B
 
 | Command | What it does |
 |---------|--------------|
-| `obks init <dir>` | Scaffold an `organization` or `product` kit with `TODO(obks)` prompts |
-| `obks validate [dir] [--strict] [--parent <dir>]` | Schema, required files, token formats, contrast, stale exports, sharing guardrails, parent tokens, rule pack |
+| `obks init <dir> [--full]` | Make a small starter kit (colors, logo, one-page `BRAND.md`). `--full` adds every optional file; product kits use `--full` |
+| `obks validate [dir] [--strict] [--parent <dir>]` | Checks only what your kit turns on: schema, token formats, contrast, stale exports, sharing guardrails, parent tokens. Suggestions never fail unless `--strict` |
 | `obks export [dir] --all` | DTCG, CSS, Tailwind v3/v4, brand-at-a-glance page, agent UI brief |
 | `obks digest [dir]` | Regenerate `AGENTS.md` and `digest/AGENT_CONTEXT.md` |
 | `obks publish [dir] [--dry-run] [--zip]` | Bundle only the files `publication` allows (refuses for private kits). `--zip` also builds `<id>-brand-kit-v<version>-<date>.zip`, a `-latest` copy, and `SHA256SUMS.txt` |
@@ -138,13 +170,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: Good-Heart-Tech/Open-Brand-Kit-Standard@v0.6.2
+      - uses: Good-Heart-Tech/Open-Brand-Kit-Standard@v1
         with:
           path: .
-          strict: "true"
 ```
 
-Inputs: `path`, `strict`, `parent-path`, `check-exports`. See [`action.yml`](action.yml).
+`@v1` always points at the latest 1.x release. Suggestions do not fail the build
+unless you set `strict: "true"`. Inputs: `path`, `strict`, `parent-path`,
+`check-exports`, `bundle`, `bundle-version`. See [`action.yml`](action.yml).
 
 ### Packages
 

@@ -6,7 +6,7 @@
 
 - **Id:** minimal-brand
 - **Name:** Minimal Brand
-- **Status:** active
+- **Maturity:** basic
 - **Role:** organization
 - **Sharing:** Private: do not send files from this kit outside the organization.
 - **Report impersonation:** security@minimal.example

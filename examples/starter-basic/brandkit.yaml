@@ -1,0 +1,23 @@
+# yaml-language-server: $schema=https://cdn.jsdelivr.net/gh/Good-Heart-Tech/Open-Brand-Kit-Standard@main/packages/obks-schema/schemas/brandkit.schema.json
+schema: obks/v1
+specVersion: 1.0.0
+brand:
+  id: starter-basic
+  displayName: Your Organization
+  maturity: basic
+role: organization
+profiles:
+  core: true
+  tokens: true
+publication:
+  visibility: private
+  includedPaths: []
+validation:
+  minContrastRatio: 4.5
+  contrastPairs:
+    - foreground: palette.text
+      background: palette.background
+      use: all text
+    - foreground: palette.background
+      background: palette.primary
+      use: button labels

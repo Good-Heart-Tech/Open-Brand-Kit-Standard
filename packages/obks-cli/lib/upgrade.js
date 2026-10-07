@@ -112,11 +112,22 @@ export function upgradeKit(kitRoot) {
   const doc = YAML.parseDocument(raw);
   const manifest = doc.toJS();
 
-  if (String(manifest.specVersion).startsWith("0.2.")) {
+  if (String(manifest.specVersion).startsWith("1.")) {
     changes.push(`already on spec ${manifest.specVersion}; refreshed exports and digest only`);
   } else {
     doc.set("specVersion", CURRENT_SPEC_VERSION);
     changes.push(`specVersion ${manifest.specVersion} -> ${CURRENT_SPEC_VERSION}`);
+  }
+
+  // brand.status (draft, active, deprecated) became brand.maturity (basic, standard, advanced) in 1.0
+  const oldStatus = manifest.brand?.status;
+  if (oldStatus) {
+    if (!manifest.brand.maturity) {
+      doc.setIn(["brand", "maturity"], oldStatus === "draft" ? "basic" : "standard");
+    }
+    if (oldStatus === "deprecated") doc.setIn(["brand", "retired"], true);
+    doc.deleteIn(["brand", "status"]);
+    changes.push(`brand.status ${oldStatus} -> brand.maturity ${manifest.brand.maturity || (oldStatus === "draft" ? "basic" : "standard")}${oldStatus === "deprecated" ? " and brand.retired: true" : ""}`);
   }
 
   // Sharing: replace partnerPublic / allowExternalMirror with publication.visibility
@@ -137,16 +148,18 @@ export function upgradeKit(kitRoot) {
     }
   }
 
-  // Security profile and brand-protection checklist
-  if (!manifest.profiles?.security) {
-    doc.setIn(["profiles", "security"], true);
-    changes.push("profiles.security enabled");
-  }
-  const protection = path.join(kitRoot, "security", "brand-protection.md");
-  if (!pathExists(protection)) {
-    const tpl = fs.readFileSync(path.join(templatesDir(), "organization", "security", "brand-protection.md"), "utf8");
-    writeText(protection, fillTemplate(tpl, { displayName: manifest.brand.displayName, brandId: manifest.brand.id }));
-    changes.push("added security/brand-protection.md checklist");
+  // Security profile and brand-protection checklist (added in 0.2; later kits choose for themselves)
+  if (String(manifest.specVersion).startsWith("0.1.")) {
+    if (!manifest.profiles?.security) {
+      doc.setIn(["profiles", "security"], true);
+      changes.push("profiles.security enabled");
+    }
+    const protection = path.join(kitRoot, "security", "brand-protection.md");
+    if (!pathExists(protection)) {
+      const tpl = fs.readFileSync(path.join(templatesDir(), "organization", "security", "brand-protection.md"), "utf8");
+      writeText(protection, fillTemplate(tpl, { displayName: manifest.brand.displayName, brandId: manifest.brand.id }));
+      changes.push("added security/brand-protection.md checklist");
+    }
   }
   if (!(manifest.validation?.contrastPairs || []).length) {
     todo.push("add validation.contrastPairs listing your text/background color pairs");

@@ -1,7 +1,7 @@
 {
   "name": "open-brand-kit-standard",
   "private": true,
-  "version": "0.6.2",
+  "version": "1.0.0",
   "description": "Open Brand Kit Standard (OBKS): specification and tooling",
   "license": "MIT",
   "type": "module",

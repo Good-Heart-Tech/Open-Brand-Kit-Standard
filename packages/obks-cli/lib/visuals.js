@@ -13,7 +13,7 @@
 //   old bkr: markers are read and rewritten as obks:)
 import fs from "node:fs";
 import path from "node:path";
-import { listFiles } from "./fs-kit.js";
+import { consumptionPaths, listFiles } from "./fs-kit.js";
 import { loadTerms } from "./terms.js";
 import { contrastRatio, cssVarName, evaluateContrast, kebab, luminance, parseHex, toPosix } from "./tokens.js";
 
@@ -358,7 +358,7 @@ function renderBlock(kind, rel, kitRoot, manifest, tokens) {
 
 // Markdown files that may hold blocks (kit docs, not generated output).
 function docFiles(kitRoot, manifest) {
-  const digest = toPosix(path.normalize(manifest.consumption?.agentDigest || ""));
+  const digest = toPosix(path.normalize(consumptionPaths(manifest).agentDigest));
   return listFiles(kitRoot)
     .map((f) => [f, toPosix(path.relative(kitRoot, f))])
     .filter(([, rel]) => rel.endsWith(".md") && !rel.startsWith("tokens/exports/") && rel !== digest && rel !== "AGENTS.md");

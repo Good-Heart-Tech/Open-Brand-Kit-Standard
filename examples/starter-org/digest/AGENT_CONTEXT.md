@@ -6,7 +6,7 @@
 
 - **Id:** acme-labs
 - **Name:** Acme Labs
-- **Status:** active
+- **Maturity:** advanced
 - **Role:** organization
 - **Organization type:** company
 - **Industry:** workplace software for small and mid-sized businesses

@@ -2,11 +2,11 @@
 # Solo business example (fictional). A small, practical kit for one person.
 # The identity layer is turned off and there is no dark theme: both are optional.
 schema: obks/v1
-specVersion: 0.2.0
+specVersion: 1.0.0
 brand:
   id: juniper-lane-studio
   displayName: Juniper Lane Studio
-  status: active
+  maturity: standard
 role: organization
 organization:
   type: solo

@@ -1,0 +1,14 @@
+{
+  "$schema": "https://cdn.jsdelivr.net/gh/Good-Heart-Tech/Open-Brand-Kit-Standard@main/packages/obks-schema/schemas/obks-token.schema.json",
+  "meta": {
+    "brandId": "starter-basic",
+    "layer": "color"
+  },
+  "tokens": {
+    "palette": {
+      "primary": { "value": "#2F5BEA", "type": "color", "description": "Main brand color for buttons and the logo. Replace with yours." },
+      "text": { "value": "#1B1F2A", "type": "color", "description": "All text. Replace with yours." },
+      "background": { "value": "#FFFFFF", "type": "color", "description": "Page background and button labels." }
+    }
+  }
+}

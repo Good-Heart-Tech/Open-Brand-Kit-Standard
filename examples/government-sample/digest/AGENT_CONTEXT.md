@@ -6,7 +6,7 @@
 
 - **Id:** brightwater-county
 - **Name:** Brightwater County
-- **Status:** active
+- **Maturity:** standard
 - **Role:** organization
 - **Organization type:** government
 - **Industry:** county government services

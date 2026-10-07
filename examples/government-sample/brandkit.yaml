@@ -2,11 +2,11 @@
 # Public agency example (fictional county government). Accessibility is a legal
 # requirement here, and the county seal is a protected mark kept out of the partner bundle.
 schema: obks/v1
-specVersion: 0.2.0
+specVersion: 1.0.0
 brand:
   id: brightwater-county
   displayName: Brightwater County
-  status: active
+  maturity: standard
 role: organization
 organization:
   type: government

@@ -1,5 +1,29 @@
 # Migration guide
 
+## Moving to 1.0
+
+Run `obks upgrade .` in your kit. It changes:
+
+| Before | After |
+|--------|-------|
+| `specVersion: 0.2.0` | `specVersion: 1.0.0` |
+| `brand.status: draft` | `brand.maturity: basic` |
+| `brand.status: active` | `brand.maturity: standard` |
+| `brand.status: deprecated` | `brand.maturity: standard` and `brand.retired: true` |
+
+Nothing else is required. Kits written for 0.1 and 0.2 keep working without
+upgrading: `brand.status` is still read (`active` counts as `standard`), and a
+note suggests running `obks upgrade`.
+
+What is different in 1.0:
+
+- Unfinished `TODO(obks)` sections are never errors. At `standard` or `advanced` they are a suggestion; at `basic` a note.
+- `profiles`, `consumption`, and `brand.status` are optional. Only the sections a kit turns on have required files.
+- A section covered by another tool can say so with `sections.<name>.see`.
+- The GitHub Action no longer fails on suggestions by default. Set `strict: "true"` to restore that.
+- Pin the Action with `@v1` to receive every 1.x fix automatically.
+- `obks init` makes a small starter kit. Use `--full` for the old full template.
+
 ## Renamed: BKR is now the Open Brand Kit Standard (OBKS)
 
 The project was renamed in version 0.6. Everything old keeps working, and one
@@ -18,7 +42,7 @@ obks validate --strict
 | `tokens/*.bkr.json` | `tokens/*.obks.json` |
 | `TODO(bkr)`, `<!-- bkr:palette -->` | `TODO(obks)`, `<!-- obks:palette -->` |
 | `@goodheart/bkr-cli`, `bkr-schema`, `bkr-rules-ght` | `@goodheart/obks-cli`, `obks-schema`, `obks-rules-ght` |
-| `Good-Heart-Tech/Brand-Kit-Standard@v...` action | `Good-Heart-Tech/Open-Brand-Kit-Standard@v0.6.2` |
+| `Good-Heart-Tech/Brand-Kit-Standard@v...` action | `Good-Heart-Tech/Open-Brand-Kit-Standard@v1` |
 
 `obks upgrade` renames the token files and updates the kit's own markdown, YAML,
 and JSON (markers, commands, links, the action reference). Generated files are

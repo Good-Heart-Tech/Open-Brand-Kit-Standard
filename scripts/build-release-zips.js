@@ -15,9 +15,11 @@ const base = `obks-starter-kits-v${version}`;
 
 // What goes in the starter zip: [path in the repo, path inside the zip]
 const INCLUDE = [
+  ["examples/starter-basic", "basic-kit"],
   ["examples/minimal", "minimal-kit"],
   ["examples/starter-org", "starter-organization-kit"],
   ["examples/starter-product-child", "starter-product-kit"],
+  ["INSTRUCTIONS-FOR-AI.md", "INSTRUCTIONS-FOR-AI.md"],
   ["docs/start-your-brand-kit.md", "docs/start-your-brand-kit.md"],
   ["docs/intake-worksheet.md", "docs/intake-worksheet.md"],
   ["docs/canva.md", "docs/canva.md"],
@@ -31,10 +33,14 @@ You do not need a GitHub account to use these files.
 1. Unzip this folder.
 2. Open docs/start-your-brand-kit.md (any text editor works) and follow the steps.
 3. Copy the kit folder that fits you, then replace the sample names, colors, and logos with yours:
-   - minimal-kit: three colors and a logo. Start here if unsure.
+   - basic-kit: a small starter with a one-page BRAND.md. Start here if unsure.
+   - minimal-kit: three colors and a logo, filled in as an example.
    - starter-organization-kit: a complete kit for a company, nonprofit, school, or agency.
    - starter-product-kit: for a product or sub-brand that inherits its parent's colors.
 4. docs/intake-worksheet.md lists what to gather before you start.
+5. Prefer to have an AI do it? Give INSTRUCTIONS-FOR-AI.md to Claude, ChatGPT, or Cursor and say "help me build my brand kit".
+
+You do not have to fill in everything. A small kit is a real kit. Write "Not decided" for anything you do not know yet.
 
 Everything in these kits is fictional sample content. Replace it before sharing.
 Project home: https://github.com/Good-Heart-Tech/Open-Brand-Kit-Standard

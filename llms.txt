@@ -1,0 +1,14 @@
+# Open Brand Kit Standard (OBKS)
+
+> A free, open standard for storing an organization's brand (colors, logo, voice, facts) as plain files that people, websites, and AI tools can all read. Stewarded by Good Heart Tech.
+
+## For AI assistants
+
+- [Instructions for AI assistants](https://raw.githubusercontent.com/Good-Heart-Tech/Open-Brand-Kit-Standard/main/INSTRUCTIONS-FOR-AI.md): how to interview a person and build a basic brand kit. Start here.
+- [Specification](https://raw.githubusercontent.com/Good-Heart-Tech/Open-Brand-Kit-Standard/main/spec/OBKS-SPEC.md): the full file layout and rules.
+
+## For people
+
+- [Start your brand kit](https://github.com/Good-Heart-Tech/Open-Brand-Kit-Standard/blob/main/docs/start-your-brand-kit.md)
+- [Download starter kits (no GitHub account needed)](https://github.com/Good-Heart-Tech/Open-Brand-Kit-Standard/releases/latest)
+- [Examples](https://github.com/Good-Heart-Tech/Open-Brand-Kit-Standard/tree/main/examples)

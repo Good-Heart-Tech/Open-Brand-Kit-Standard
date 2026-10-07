@@ -6,7 +6,7 @@
 
 - **Id:** ridgeline-coffee
 - **Name:** Ridgeline Coffee Roasters
-- **Status:** active
+- **Maturity:** standard
 - **Role:** organization
 - **Organization type:** company
 - **Industry:** specialty coffee (roasting, cafes, online shop, and wholesale)

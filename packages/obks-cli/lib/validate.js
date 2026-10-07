@@ -8,6 +8,8 @@ import {
   CURRENT_SPEC_VERSION,
   OLD_CONTRACT,
   SUPPORTED_SPEC,
+  coveredElsewhere,
+  effectiveMaturity,
   listFiles,
   pathExists,
   readJson,
@@ -68,8 +70,8 @@ export async function validateKit(kitRoot, options = {}) {
   const warnings = [];
   const notes = [];
 
-  if (!pathExists(path.join(kitRoot, "README.md"))) errors.push("Missing README.md");
-  if (!pathExists(path.join(kitRoot, "AGENTS.md"))) errors.push("Missing AGENTS.md (run `obks digest`)");
+  if (!pathExists(path.join(kitRoot, "README.md"))) notes.push("No README.md yet: add one so people know what this folder is");
+  if (!pathExists(path.join(kitRoot, "AGENTS.md"))) notes.push("No AGENTS.md yet: run `obks digest` to create the instructions AI tools read first");
 
   let manifest;
   try {
@@ -85,27 +87,35 @@ export async function validateKit(kitRoot, options = {}) {
       errors.push(`brandkit.yaml: ${err.instancePath || "/"} ${err.message}`);
     }
     // Later checks assume a well-formed manifest.
-    if (!manifest?.brand?.id || !manifest?.profiles) {
+    if (!manifest?.brand?.id) {
       return { ok: false, errors, warnings, notes, manifest };
     }
   }
 
   if (!SUPPORTED_SPEC.test(String(manifest.specVersion))) {
-    errors.push(`specVersion ${manifest.specVersion} is not supported by this CLI (supports 0.1.x and 0.2.x)`);
+    errors.push(`specVersion ${manifest.specVersion} is not supported by this CLI (supports 0.1.x, 0.2.x, and 1.x)`);
   } else if (String(manifest.specVersion).startsWith("0.1.")) {
     warnings.push(`specVersion ${manifest.specVersion} is out of date; run \`obks upgrade\` to move to ${CURRENT_SPEC_VERSION}`);
   }
 
-  // --- Required files per profile
-  const profiles = manifest.profiles || {};
+  const maturity = effectiveMaturity(manifest);
+  if (manifest.brand.status && !manifest.brand.maturity) {
+    notes.push("brand.status is now brand.maturity (basic, standard, or advanced): run `obks upgrade` to convert it");
+  }
+
+  // --- Required files: only for sections the kit turned on, and not for sections covered elsewhere
+  const elsewhere = coveredElsewhere(manifest);
+  for (const [name, see] of Object.entries(elsewhere)) notes.push(`${name} is covered elsewhere (${see}); its files are not required`);
+  const profiles = { ...(manifest.profiles || {}) };
+  for (const name of Object.keys(elsewhere)) profiles[name] = false;
   for (const [profile, enabled] of Object.entries(profiles)) {
     if (!enabled) continue;
     for (const rel of PROFILE_PATHS[profile] || []) {
-      if (!pathExists(path.join(kitRoot, rel))) errors.push(`Profile ${profile}: missing ${rel}`);
+      if (!pathExists(path.join(kitRoot, rel))) errors.push(`Section ${profile} is turned on but ${rel} is missing. Add it, or turn the section off in brandkit.yaml (profiles.${profile}: false), or point to where it lives (sections.${profile}.see).`);
     }
   }
-  if (!profiles.security) {
-    warnings.push("Profile security is off: add security/brand-protection.md and set profiles.security: true");
+  if (!profiles.security && !elsewhere.security) {
+    notes.push("Tip: a short security/brand-protection.md helps stop people impersonating your brand (profiles.security: true)");
   }
 
   if (profiles.visual) {
@@ -134,7 +144,7 @@ export async function validateKit(kitRoot, options = {}) {
       else if (!row.pass) errors.push(`${label} is ${row.ratio.toFixed(2)}:1, needs ${row.min}:1`);
     }
     if (!(manifest.validation?.contrastPairs || []).length) {
-      warnings.push("validation.contrastPairs is empty: list your text/background pairs so contrast is checked");
+      notes.push("Tip: list your text and background pairs in validation.contrastPairs so readability is checked");
     }
 
     warnings.push(...checkNarrativeRefs(kitRoot, tokens, manifestKeys(manifest)));
@@ -142,7 +152,7 @@ export async function validateKit(kitRoot, options = {}) {
     // People cannot see a color from a hex code; READMEs must show the palette.
     if (tokens.files.every((f) => f.doc)) {
       const md = checkMarkdownBlocks(kitRoot, manifest, tokens);
-      if (profiles.visual && !md.readmeVisual) {
+      if (profiles.visual && !md.readmeVisual && readStoredHash(kitRoot)) {
         warnings.push(
           "README.md does not show the colors: add ![Colors](tokens/exports/svg/palette.svg) or a <!-- obks:palette --> block"
         );
@@ -160,7 +170,7 @@ export async function validateKit(kitRoot, options = {}) {
 
     const stored = readStoredHash(kitRoot);
     if (!stored) {
-      warnings.push("tokens/exports/.obks-export-hash missing: run `obks export --all`");
+      notes.push("No generated files yet (tokens/exports/): run `obks export --all` if you want CSS, Tailwind, and the brand page");
     } else if (tokens.files.every((f) => f.doc) && stored !== computeSourceHash(kitRoot)) {
       warnings.push("tokens/exports/ is out of date with tokens/ or brandkit.yaml: run `obks export --all`");
     }
@@ -212,8 +222,9 @@ export async function validateKit(kitRoot, options = {}) {
     .map(([, rel]) => rel);
   if (todos.length) {
     const msg = `${todos.length} file(s) still have ${TODO_MARKER} sections to fill in: ${todos.join(", ")}`;
-    if (manifest.brand.status === "active") errors.push(`${msg} (brand.status is active)`);
-    else warnings.push(msg);
+    // A basic kit is allowed to be unfinished. Claiming standard or advanced asks for it to be filled in.
+    if (maturity === "basic") notes.push(`${msg} (fine for a basic kit)`);
+    else warnings.push(`${msg} (this kit says it is ${maturity})`);
   }
 
   // --- Rule pack
@@ -229,7 +240,7 @@ export async function validateKit(kitRoot, options = {}) {
   }
 
   const ok = errors.length === 0 && (!strict || warnings.length === 0);
-  return { ok, errors, warnings, notes, manifest };
+  return { ok, errors, warnings, notes, manifest, maturity };
 }
 
 function checkTokenFiles(tokens, manifest, validateTokenDoc, errors, warnings) {

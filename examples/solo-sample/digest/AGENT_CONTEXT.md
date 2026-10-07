@@ -6,7 +6,7 @@
 
 - **Id:** juniper-lane-studio
 - **Name:** Juniper Lane Studio
-- **Status:** active
+- **Maturity:** standard
 - **Role:** organization
 - **Organization type:** solo
 - **Industry:** photography and design for small businesses

@@ -1,0 +1,4 @@
+# obks publish output (rebuild any time)
+dist/
+node_modules/
+.DS_Store

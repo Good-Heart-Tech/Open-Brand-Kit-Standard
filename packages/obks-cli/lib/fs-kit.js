@@ -8,9 +8,9 @@ import YAML from "yaml";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
 
-// Spec versions this CLI understands. 0.1 kits still validate but get an upgrade hint.
-export const CURRENT_SPEC_VERSION = "0.2.0";
-export const SUPPORTED_SPEC = /^0\.(1|2)\.\d+$/;
+// Spec versions this CLI understands. 0.1 and 0.2 kits still validate but get an upgrade hint.
+export const CURRENT_SPEC_VERSION = "1.0.0";
+export const SUPPORTED_SPEC = /^(0\.[12]|1\.\d+)\.\d+$/;
 
 // Public schema URLs, served by the free jsDelivr CDN straight from this repo's main
 // branch (no hosting to set up). Only editors use them; obks validate uses the bundled copies.
@@ -28,6 +28,33 @@ export const CONTRACT = "obks/v1";
 export const OLD_CONTRACT = "ght.brandkit/v1";
 // Token files: *.obks.json (current) or *.bkr.json (before the rename).
 export const TOKEN_FILE = /\.(obks|bkr)\.json$/;
+
+// Default locations of generated files, so a manifest does not have to list them.
+export function consumptionPaths(manifest) {
+  return {
+    cssVariables: manifest.consumption?.cssVariables || "tokens/exports/css/variables.css",
+    agentDigest: manifest.consumption?.agentDigest || "digest/AGENT_CONTEXT.md",
+    tailwindTheme: manifest.consumption?.tailwindTheme || "tokens/exports/tailwind/theme.cjs",
+  };
+}
+
+// How complete the kit says it is: basic, standard, or advanced. brand.status (before 1.0)
+// is still read: "active" counted as a finished kit, so it maps to standard.
+export const MATURITIES = ["basic", "standard", "advanced"];
+export function effectiveMaturity(manifest) {
+  if (manifest.brand?.maturity) return manifest.brand.maturity;
+  if (manifest.brand?.status === "active") return "standard";
+  return "basic";
+}
+
+// Sections (profiles) the kit says are covered somewhere else, with a pointer to where.
+export function coveredElsewhere(manifest) {
+  const out = {};
+  for (const [name, v] of Object.entries(manifest.sections || {})) {
+    if (v && typeof v.see === "string" && v.see.trim()) out[name] = v.see.trim();
+  }
+  return out;
+}
 
 export function resolveKitPath(inputPath) {
   return path.resolve(process.cwd(), inputPath || ".");

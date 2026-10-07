@@ -1,32 +1,30 @@
 # To release: bump the version everywhere (package.json and the three packages) and push to main.
-#   - "assets" (runs on every push to main): if no release exists yet for v<version>, it creates
-#     the tag and GitHub release and attaches the starter kit zip and SHA256SUMS.txt, so people
-#     without a GitHub account can download them. If the release exists, it does nothing.
-#     Pushing a v* tag by hand or publishing a release in the GitHub UI also works.
-#     No secrets needed.
-#   - "publish" (runs only when a release is published by a person in the GitHub UI):
-#     publishes the three packages to npm.
+#   - "assets": if no release exists yet for v<version>, creates the tag and GitHub release,
+#     attaches the starter kit zip and SHA256SUMS.txt (so people without a GitHub account can
+#     download them), and moves the floating major tag (for example v1) to this release.
+#     If the release already exists, it does nothing. Pushing a v* tag by hand also works.
+#   - "publish": after a new release, publishes the three packages to npm, but only when the
+#     NPM_TOKEN secret exists. Packages already on npm at this version are skipped.
+#     Run it by hand from the Actions tab (workflow_dispatch) after adding the token.
 # One-time setup for npm:
 #   1. Create the free "goodheart" organization on npmjs.com (public packages are free).
-#   2. Add an npm automation token as the repository secret NPM_TOKEN.
+#   2. Create an npm automation (granular, publish) token and add it as the repository secret NPM_TOKEN.
 name: release
 
 on:
   push:
     branches: [main]
     tags: ["v*"]
-  release:
-    types: [published]
-
-permissions:
-  contents: read
-  id-token: write
+  workflow_dispatch:
 
 jobs:
   assets:
+    if: github.event_name != 'workflow_dispatch'
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    outputs:
+      created: ${{ steps.tag.outputs.skip != 'true' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -47,8 +45,13 @@ jobs:
             if gh release view "$tag" >/dev/null 2>&1; then echo "Release $tag already exists; nothing to do."; echo "skip=true" >> "$GITHUB_OUTPUT"; fi
           fi
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "major=v${version%%.*}" >> "$GITHUB_OUTPUT"
       - if: steps.tag.outputs.skip != 'true'
         run: npm ci
+      - if: steps.tag.outputs.skip != 'true'
+        run: npm test
+      - if: steps.tag.outputs.skip != 'true'
+        run: npm run validate
       - if: steps.tag.outputs.skip != 'true'
         run: node scripts/build-release-zips.js
       - name: Create the release if needed
@@ -61,27 +64,53 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release upload "${{ steps.tag.outputs.tag }}" dist/release/* --clobber
+      - name: Move the floating major tag (for example v1)
+        if: steps.tag.outputs.skip != 'true'
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git tag -f "${{ steps.tag.outputs.major }}" "$GITHUB_SHA"
+          git push -f origin "refs/tags/${{ steps.tag.outputs.major }}"
 
   publish:
-    if: github.event_name == 'release'
+    needs: assets
+    if: always() && (github.event_name == 'workflow_dispatch' || needs.assets.outputs.created == 'true')
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      HAS_NPM_TOKEN: ${{ secrets.NPM_TOKEN != '' }}
     steps:
+      - name: Say if npm is not set up
+        if: env.HAS_NPM_TOKEN != 'true'
+        run: echo "::warning::NPM_TOKEN is not set, so nothing was published to npm. Add the secret, then run this workflow by hand."
       - uses: actions/checkout@v4
+        if: env.HAS_NPM_TOKEN == 'true'
       - uses: actions/setup-node@v4
+        if: env.HAS_NPM_TOKEN == 'true'
         with:
           node-version: "22"
           registry-url: "https://registry.npmjs.org"
           cache: npm
-      - run: npm ci
-      - run: npm test
-      - run: npm run validate
+      - if: env.HAS_NPM_TOKEN == 'true'
+        run: npm ci
+      - if: env.HAS_NPM_TOKEN == 'true'
+        run: npm test
+      - if: env.HAS_NPM_TOKEN == 'true'
+        run: npm run validate
       # Order matters: the CLI depends on the schema and rules packages.
-      - run: npm publish --workspace packages/obks-schema --provenance --access public
+      - name: Publish packages that are not on npm yet
+        if: env.HAS_NPM_TOKEN == 'true'
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-      - run: npm publish --workspace packages/obks-rules-ght --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-      - run: npm publish --workspace packages/obks-cli --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          for pkg in obks-schema obks-rules-ght obks-cli; do
+            name=$(node -p "require('./packages/$pkg/package.json').name")
+            version=$(node -p "require('./packages/$pkg/package.json').version")
+            if npm view "$name@$version" version >/dev/null 2>&1; then
+              echo "$name@$version is already on npm; skipping."
+            else
+              npm publish --workspace "packages/$pkg" --provenance --access public
+            fi
+          done
